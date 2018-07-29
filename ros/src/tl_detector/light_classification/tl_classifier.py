@@ -8,7 +8,7 @@ import cv2
 
 # Configure whether ot use the whole image classifier (implemented with keras)
 # or the semantic segmentation network (implemented with just tensorflow)
-USE_KERAS_CLASSIFIER = True
+USE_KERAS_CLASSIFIER = False
 
 if USE_KERAS_CLASSIFIER:
     # Use simple whole image classifier
@@ -76,7 +76,8 @@ if USE_KERAS_CLASSIFIER:
 else:
     # Use semantic segmentation classifier
     IMAGE_SIZE = (256, 256)  # this can be any multiple of 32 for this model
-    model_name = "./trafficlight-segmenter/model"
+    # model_name = "./trafficlight-segmenter/frozen"
+    model_name = "/home/alebioda/CarND-Capstone/ros/src/tl_detector/light_classification/frozen/saved_model.pb"
     from train_segmenter import restore_model
 
     CLASS_LABELS = [
@@ -86,7 +87,7 @@ else:
         "yellow"
     ]
 
-    from .dataset import reverse_one_hot
+#    from .dataset import reverse_one_hot
 
     class TLClassifier(object):
         def __init__(self, class_label_to_state_as_int32):
@@ -94,8 +95,8 @@ else:
             self.class_label_to_state_as_int32 = class_label_to_state_as_int32
             self.session = tf.Session()
 
-            if os.path.exists(model_name):
-                self.logits, self.keep_prob, self.input_image, self.predicted_label_probabilities = restore_model(self.session, model_name)
+#            if os.path.exists(model_name):
+            self.logits, self.keep_prob, self.input_image, self.predicted_label_probabilities = restore_model(self.session, model_name)
 
             self.red_light_threshold = .05
             self.green_light_threshold = .05

@@ -473,20 +473,21 @@ def train(dataset_parameters,
                  )
 
 
+from tensorflow import gfile
+
 def restore_model(sess, model_dir):
-    model_meta = ".".join([tf.train.latest_checkpoint(model_dir), "meta"])
-    model_data = tf.train.latest_checkpoint(model_dir)
-
-    print("model_meta {0} model_data {1}".format(model_meta, model_data))
-
-    saver = tf.train.import_meta_graph(model_meta)
-    saver.restore(sess, model_data)
+    with gfile.GFile(model_dir, 'rb') as f:
+        graph_def = tf.GraphDef()
+        graph_def.ParseFromString(f.read())
+        tf.import_graph_def(graph_def)
 
     graph = tf.get_default_graph()
 
-    logits = graph.get_tensor_by_name("logits:0")
-    keep_prob = graph.get_tensor_by_name("keep_prob:0")
-    input_image = graph.get_tensor_by_name("image_input:0")
+    print([n.name for n in graph.as_graph_def().node])
+
+    logits = graph.get_tensor_by_name("import/logits:0")
+    keep_prob = graph.get_tensor_by_name("import/keep_prob:0")
+    input_image = graph.get_tensor_by_name("import/image_input:0")
 
     predicted_label_probabilities = tf.nn.softmax(logits)
 
