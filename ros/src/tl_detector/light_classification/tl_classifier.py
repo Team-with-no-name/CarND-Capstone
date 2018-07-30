@@ -11,7 +11,7 @@ import cv2
 USE_KERAS_CLASSIFIER = False
 
 if USE_KERAS_CLASSIFIER:
-    # Use simple whole image classifier
+    # Use simple whole image classifier -- (Didn't work very well)
 
     import keras
     import keras.models
@@ -74,7 +74,6 @@ if USE_KERAS_CLASSIFIER:
                 return class_int
 
 else:
-    # Use semantic segmentation classifier
     IMAGE_SIZE = (256, 256)  # this can be any multiple of 32 for this model
     MODEL_NAME = "./trafficlight-segmenter/saved_model-2.pb"
     from train_segmenter import restore_model
@@ -101,7 +100,7 @@ else:
                     "this arg isn't used -- ack python is hard to maintain", MODEL_NAME
                 )
 
-            # still TODO: tweak these ...
+            # TODO: tweak these ...?
             self.red_light_threshold = .01
             self.green_light_threshold = .01
             self.yellow_light_threshold = .01
@@ -121,6 +120,16 @@ else:
 
             sess = self.session
 
+            # Determine traffic light state using semantic segmentation
+            # The semantic segmentation model computes an image with same
+            # dimensions where pixel locations have class values:
+            # 0=(nonlight)
+            # 1(red light)
+            # 2(green light)
+            # 3(yellow light)
+            # We then compute (in tensorflow for performance) the percentage of
+            # pixels in the image for each class.
+
             feed_dict = {
                 self.input_image: resized_image,
                 self.keep_prob: 1.0
@@ -130,8 +139,18 @@ else:
                                          feed_dict=feed_dict
                                          )[0]
 
-            # minimal viable concept ... should do something better to go from
-            # segmentation map to traffic light prediction ...
+            # The minimal viable concept for turning the segmentation
+            # map into a single class prediction for the whole image.
+
+            # A better approach might incorporate camera parameters/knowledge of the
+            # known geometry of traffic light locations to determine which traffic
+            # detections were most important to pay attention to ...
+
+            # This implementation just uses a threshold --
+
+            # if the number of 'red light' pixels exceeds a percentage of image
+            # size -- its a red light ahead -- and so on with the green and yellow lights
+
             nonlight_percent, red_percent, green_percent, yellow_percent = label_percentages
 
             if red_percent > self.red_light_threshold:
