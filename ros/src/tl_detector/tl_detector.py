@@ -148,7 +148,7 @@ class TLDetector(object):
             return self.last_state
 
         if IMAGE_HANDLING_MODE == "classify":
-            cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+            cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
             return self.light_classifier.get_classification(cv_image)
         # otherwise return the light state from the simulator
         return light.state
