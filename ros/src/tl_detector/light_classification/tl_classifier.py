@@ -119,8 +119,6 @@ else:
             resized_image = cv2.resize(image, IMAGE_SIZE[:2])
             resized_image = np.expand_dims(resized_image, axis=0)
 
-            print(resized_image.shape)
-
             sess = self.session
 
             feed_dict = {
@@ -134,7 +132,6 @@ else:
 
             # minimal viable concept ... should do something better to go from
             # segmentation map to traffic light prediction ...
-            print("label_percentages: ", label_percentages)
             nonlight_percent, red_percent, green_percent, yellow_percent = label_percentages
 
             if red_percent > self.red_light_threshold:
@@ -146,6 +143,7 @@ else:
             else:
                 class_label = "unknown"
 
-            print("class label: ", class_label)
+            # print("label_percentages: ", label_percentages)
+            # print("class label: ", class_label)
 
             return self.class_label_to_state_as_int32[class_label]
