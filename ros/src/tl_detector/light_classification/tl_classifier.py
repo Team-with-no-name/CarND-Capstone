@@ -8,7 +8,7 @@ import cv2
 
 # Configure whether ot use the whole image classifier (implemented with keras)
 # or the semantic segmentation network (implemented with just tensorflow)
-USE_KERAS_CLASSIFIER = True
+USE_KERAS_CLASSIFIER = False
 
 if USE_KERAS_CLASSIFIER:
     # Use simple whole image classifier
@@ -76,7 +76,7 @@ if USE_KERAS_CLASSIFIER:
 else:
     # Use semantic segmentation classifier
     IMAGE_SIZE = (256, 256)  # this can be any multiple of 32 for this model
-    MODEL_NAME = "./trafficlight-segmenter/saved_model-0.pb"
+    MODEL_NAME = "./trafficlight-segmenter/saved_model-2.pb"
     from train_segmenter import restore_model
 
     CLASS_LABELS = [
@@ -94,9 +94,11 @@ else:
             self.class_label_to_state_as_int32 = class_label_to_state_as_int32
             self.session = tf.Session()
 
-            if os.path.exists(model_name):
+            if os.path.exists(MODEL_NAME):
+                print("Loading model from {0}".format(MODEL_NAME))
                 self.logits, self.keep_prob, self.input_image, self.predict_label_probabilities, self.predict_label_distribution = restore_model(
-                    self.session, "this arg isn't used -- ack python is hard to maintain", MODEL_NAME
+                    self.session,
+                    "this arg isn't used -- ack python is hard to maintain", MODEL_NAME
                 )
 
             # still TODO: tweak these ...
@@ -104,7 +106,7 @@ else:
             self.green_light_threshold = .01
             self.yellow_light_threshold = .01
 
-        def get_classification(self, images):
+        def get_classification(self, image):
             """Determines the color of the traffic light in the image
 
             Args:
@@ -114,28 +116,25 @@ else:
                 int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
             """
-            if not isinstance(images, list):
-                images = [images]
+            resized_image = cv2.resize(image, IMAGE_SIZE[:2])
+            resized_image = np.expand_dims(resized_image, axis=0)
 
-            resized_images = []
-            for img in images:
-                resized_image = cv2.resize(img, IMAGE_SIZE[:2])
-                resized_image = np.expand_dims(resized_image, axis=0)
-                resized_images.append(resized_image)
+            print(resized_image.shape)
 
             sess = self.session
 
             feed_dict = {
-                self.input_image: resized_images,
+                self.input_image: resized_image,
                 self.keep_prob: 1.0
             }
 
             label_percentages = sess.run([self.predict_label_distribution],
                                          feed_dict=feed_dict
-                                         )
+                                         )[0]
 
             # minimal viable concept ... should do something better to go from
             # segmentation map to traffic light prediction ...
+            print("label_percentages: ", label_percentages)
             nonlight_percent, red_percent, green_percent, yellow_percent = label_percentages
 
             if red_percent > self.red_light_threshold:
@@ -146,5 +145,7 @@ else:
                 class_label = "yellow"
             else:
                 class_label = "unknown"
+
+            print("class label: ", class_label)
 
             return self.class_label_to_state_as_int32[class_label]
