@@ -35,6 +35,14 @@ Originally hoped to implement minimum viable product via this method, but this a
 
 0.  `python train_segmenter.py --mode test --dataset traffic-lights --use-frozen-model path/to/saved_model-.pb --test-images-from-directory path/to/test_images`
 
+![](example_images/00014_35264.png)
+![](example_images/00000_26174.png)
+![](example_images/00003_29750.png)
+![](example_images/00030_1531668970.21.jpg)
+![](example_images/00000025_1531669018.69.jpg)
+![](example_images/00020_1531669020.69.jpg)
+![](example_images/00045_1531674141.4.jpg)
+
 ## Description
 
 train-segmenter.py produces a semantic segmentation network that attempts to predict for each pixel in an image, whether that pixel is part of a 'red light' 'green light' 'yellow light' or none of those.
